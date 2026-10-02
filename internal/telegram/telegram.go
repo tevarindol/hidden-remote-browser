@@ -12,51 +12,21 @@ import (
 type Sender struct {
 	ChatID int64
 	api    *bot.Bot
-	first  chan int64
 }
 
 func New(token string) (*Sender, error) {
-	s := &Sender{first: make(chan int64, 1)}
-	api, err := bot.New(token, bot.WithDefaultHandler(
-		func(_ context.Context, _ *bot.Bot, upd *models.Update) {
-			if upd.Message == nil {
-				return
-			}
-			select {
-			case s.first <- upd.Message.Chat.ID:
-			default:
-			}
-		}))
+	api, err := bot.New(token)
 	if err != nil {
 		return nil, fmt.Errorf("create telegram bot: %w", err)
 	}
-	s.api = api
-	return s, nil
-}
-
-func (s *Sender) EnsureChat(ctx context.Context) error {
-	if s.ChatID != 0 {
-		return nil
-	}
-	rctx, rcancel := context.WithCancel(ctx)
-	defer rcancel()
-
-	go s.api.Start(rctx)
-	select {
-	case id := <-s.first:
-		s.ChatID = id
-		return nil
-	case <-ctx.Done():
-		return fmt.Errorf("unknown chat: %w (send /start to the bot in telegram)", ctx.Err())
-	}
+	return &Sender{api: api}, nil
 }
 
 type Page struct {
-	Title   string
-	URL     string
-	HTML    string
-	PDF     []byte
-	WithPDF bool
+	Title string
+	URL   string
+	HTML  string
+	PDF   []byte
 }
 
 func (s *Sender) SendPage(ctx context.Context, p Page) error {
@@ -67,7 +37,7 @@ func (s *Sender) SendPage(ctx context.Context, p Page) error {
 		return fmt.Errorf("send html: %w", err)
 	}
 
-	if p.WithPDF && len(p.PDF) > 0 {
+	if len(p.PDF) > 0 {
 		if _, err := s.api.SendDocument(ctx, &bot.SendDocumentParams{
 			ChatID:   s.ChatID,
 			Document: &models.InputFileUpload{Filename: "Task.pdf", Data: bytes.NewReader(p.PDF)},

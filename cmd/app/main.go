@@ -24,9 +24,7 @@ func main() {
 	defer a.Close()
 
 	if err := a.Start(ctx); err != nil {
-		logger.Error("startup failed", "err", err)
+		logger.Error("capture failed", "err", err)
 		os.Exit(1)
 	}
-
-	<-ctx.Done()
 }

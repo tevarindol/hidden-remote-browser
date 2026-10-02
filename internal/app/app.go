@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/tevarindol/hidden-remote-browser/internal/chrome"
-	"github.com/tevarindol/hidden-remote-browser/internal/hotkey"
 	"github.com/tevarindol/hidden-remote-browser/internal/telegram"
 )
 
@@ -36,25 +35,10 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 	tg.ChatID = a.cfg.ChatID
-	if err := tg.EnsureChat(ctx); err != nil {
-		return err
-	}
-	if a.cfg.ChatID == 0 {
-		a.log.Info("chat resolved; set TG_CHAT_ID to pin it", "chatID", tg.ChatID)
-	}
 	a.tg = tg
 	a.chatID = tg.ChatID
 
-	if err := hotkey.Start(ctx, a.cfg.Hotkey, func() { a.capture(ctx) }); err != nil {
-		return err
-	}
-
-	a.log.Info("running",
-		"chrome", a.cfg.ChromeURL,
-		"chatID", a.chatID,
-		"pdf", a.cfg.SendPDF,
-		"hotkey", a.cfg.Hotkey,
-		"selector", a.cfg.HTMLSelector)
+	a.capture(ctx)
 	return nil
 }
 

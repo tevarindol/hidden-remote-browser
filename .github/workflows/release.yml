@@ -8,7 +8,22 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
+    strategy:
+      matrix:
+        include:
+          - name: hidden-remote-browser-hidden-x86_64.exe
+            goos: windows
+            goarch: amd64
+            ldflags: "-s -w -H=windowsgui"
+          - name: hidden-remote-browser-x86_64.exe
+            goos: windows
+            goarch: amd64
+            ldflags: "-s -w"
+          - name: hidden-remote-browser-x86_64
+            goos: linux
+            goarch: amd64
+            ldflags: "-s -w"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,24 +32,26 @@ jobs:
         with:
           go-version: "1.27.1"
 
-      - name: Install X11 headers
-        run: sudo apt-get update && sudo apt-get install -y libx11-dev
+      - name: Build
+        run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -trimpath -ldflags "${{ matrix.ldflags }}" -o ${{ matrix.name }} ./cmd/app
 
-      - name: Build app.exe
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H=windowsgui" -o app.exe ./cmd/app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
 
-      - name: Build app-hidden.exe
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o app-hidden.exe ./cmd/app
-
-      - name: Build app-linux
-        run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o app-linux ./cmd/app
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            app.exe
-            app-hidden.exe
-            app-linux
+          files: out/*
         env:
           GITHUB_TOKEN: ${{ github.token }}

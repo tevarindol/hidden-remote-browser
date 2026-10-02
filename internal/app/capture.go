@@ -7,7 +7,7 @@ import (
 )
 
 func (a *App) capture(ctx context.Context) {
-	a.log.Info("capture triggered", "vk", a.cfg.Hotkey)
+	a.log.Info("capture triggered")
 
 	cap, err := a.client.CaptureActiveTab(a.cfg.SendPDF, a.cfg.HTMLSelector)
 	if err != nil {
@@ -18,11 +18,10 @@ func (a *App) capture(ctx context.Context) {
 	}
 
 	if err := a.tg.SendPage(ctx, telegram.Page{
-		Title:   cap.Title,
-		URL:     cap.URL,
-		HTML:    cap.HTML,
-		PDF:     cap.PDF,
-		WithPDF: a.cfg.SendPDF,
+		Title: cap.Title,
+		URL:   cap.URL,
+		HTML:  cap.HTML,
+		PDF:   cap.PDF,
 	}); err != nil {
 		a.log.Error("telegram send failed", "err", err)
 	}

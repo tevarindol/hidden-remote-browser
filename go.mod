@@ -4,18 +4,15 @@ go 1.27.1
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
-	github.com/chromedp/cdproto v0.0.0-20260922220944-a19bff23514f
-	github.com/chromedp/chromedp v0.16.0
+	github.com/go-rod/rod v0.116.2
 	github.com/go-telegram/bot v1.27.0
 	github.com/joho/godotenv v1.5.1
-	golang.design/x/hotkey v0.6.4
 )
 
 require (
-	github.com/chromedp/sysutil v1.1.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
-	github.com/gobwas/httphead v0.1.0 // indirect
-	github.com/gobwas/pool v0.2.1 // indirect
-	github.com/gobwas/ws v1.4.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	github.com/ysmood/fetchup v0.5.3 // indirect
+	github.com/ysmood/goob v0.4.0 // indirect
+	github.com/ysmood/got v0.41.0 // indirect
+	github.com/ysmood/gson v0.7.3 // indirect
+	github.com/ysmood/leakless v0.9.0 // indirect
 )
