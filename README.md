@@ -10,6 +10,7 @@ Capture the Chrome tab you have open and send it to Telegram; the tool attaches 
 - [Description](#description)
 - [Installation](#installation)
 - [Build](#build)
+- [Hotkey](#hotkey)
 - [Configuration](#configuration)
 - [License](#license)
 
@@ -49,6 +50,10 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ./cmd/app
 ```
 
 Pushing a `v*.*.*` tag triggers GitHub Actions, which builds and publishes the release binaries listed above.
+
+## Hotkey
+
+`scripts/hotkey.ahk` (AutoHotkey v2) launches the capture on the numpad minus key (`NumpadSub`). Put the hidden exe next to the script or edit the path inside.
 
 ## Configuration
 
