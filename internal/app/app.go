@@ -13,7 +13,6 @@ type App struct {
 	cfg    Config
 	client *chrome.Client
 	tg     *telegram.Sender
-	chatID int64
 }
 
 func New(log *slog.Logger) (*App, error) {
@@ -36,7 +35,10 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	tg.ChatID = a.cfg.ChatID
 	a.tg = tg
-	a.chatID = tg.ChatID
+
+	if a.cfg.KDEDeviceID != "" {
+		a.log.Info("kde share-text enabled", "device_id", a.cfg.KDEDeviceID)
+	}
 
 	a.capture(ctx)
 	return nil

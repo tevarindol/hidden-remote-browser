@@ -11,6 +11,7 @@ type Config struct {
 	ChromeURL     string `env:"CHROME_URL" envDefault:"http://localhost:9222"`
 	SendPhoto     bool   `env:"SEND_PHOTO" envDefault:"false"`
 	HTMLSelector  string `env:"HTML_SELECTOR" envDefault:"main"`
+	KDEDeviceID   string `env:"KDE_DEVICE_ID"`
 }
 
 func Load() (Config, error) {

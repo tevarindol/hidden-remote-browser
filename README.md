@@ -59,6 +59,7 @@ Copy `.env.example` to `.env` next to the binary (real environment variables win
 - `CHROME_URL` (default `http://localhost:9222`): Chrome CDP endpoint
 - `SEND_PHOTO` (default `false`): attach a viewport screenshot as `Task.png`
 - `HTML_SELECTOR` (default `main`): CSS selector of the element sent as `Task.html`
+- `KDE_DEVICE_ID` (optional): Android device id from `kdeconnect-cli -a --id-only`. When set, the capture HTML is also shared to the phone with `kdeconnect-cli --share-text` (requires the KDE Connect daemon running and paired with the phone).
 
 ## License
 
