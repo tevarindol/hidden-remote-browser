@@ -41,9 +41,3 @@ func (a *App) Start(ctx context.Context) error {
 	a.capture(ctx)
 	return nil
 }
-
-func (a *App) Close() {
-	if a.client != nil {
-		a.client.Close()
-	}
-}

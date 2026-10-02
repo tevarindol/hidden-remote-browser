@@ -24,20 +24,13 @@ type Capture struct {
 }
 
 type Client struct {
-	ctx  context.Context
-	url  string
-	br   *rod.Browser
-	spun bool
+	ctx context.Context
+	url string
+	br  *rod.Browser
 }
 
 func New(ctx context.Context, url string) *Client {
 	return &Client{ctx: ctx, url: url}
-}
-
-func (c *Client) Close() {
-	if c.spun {
-		c.br.Close()
-	}
 }
 
 func (c *Client) Warmup(ctx context.Context) error {
@@ -51,7 +44,6 @@ func (c *Client) Warmup(ctx context.Context) error {
 			"connect to chrome at %s: %w (start chrome with --remote-debugging-port=9222; since chrome 136 a dedicated --user-data-dir is required)",
 			c.url, err)
 	}
-	c.spun = true
 	if _, err := c.br.Timeout(captureTimeout).Pages(); err != nil {
 		return fmt.Errorf("list chrome targets: %w", err)
 	}
