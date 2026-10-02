@@ -6,8 +6,8 @@ github.com/go-telegram/bot v1.27.0 h1:PG9yBDzM8O26oUerE9SZwWlHon4RpH8WcNslZ7CEZm
 github.com/go-telegram/bot v1.27.0/go.mod h1:i2TRs7fXWIeaceF3z7KzsMt/he0TwkVC680mvdTFYeM=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
-github.com/ysmood/fetchup v0.5.3 h1:A8kgQ9RfAgOvSvB501ufmB1z6Qnke4xMkv6VDgav6DQ=
-github.com/ysmood/fetchup v0.5.3/go.mod h1:yCv8s8itjsCul1LGXJ1Q+8EQnZcVjfbZ4+l1zDm4StE=
+github.com/ysmood/fetchup v0.2.3 h1:ulX+SonA0Vma5zUFXtv52Kzip/xe7aj4vqT5AJwQ+ZQ=
+github.com/ysmood/fetchup v0.2.3/go.mod h1:xhibcRKziSvol0H1/pj33dnKrYyI2ebIvz5cOOkYGns=
 github.com/ysmood/goob v0.4.0 h1:HsxXhyLBeGzWXnqVKtmT9qM7EuVs/XOgkX7T6r1o1AQ=
 github.com/ysmood/goob v0.4.0/go.mod h1:u6yx7ZhS4Exf2MwciFr6nIM8knHQIE22lFpWHnfql18=
 github.com/ysmood/gop v0.2.0 h1:+tFrG0TWPxT6p9ZaZs+VY+opCvHU8/3Fk6BaNv6kqKg=
