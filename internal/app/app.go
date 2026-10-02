@@ -4,8 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"golang.design/x/clipboard"
-
 	"github.com/tevarindol/hidden-remote-browser/internal/chrome"
 	"github.com/tevarindol/hidden-remote-browser/internal/hotkey"
 	"github.com/tevarindol/hidden-remote-browser/internal/telegram"
@@ -23,9 +21,6 @@ func New(log *slog.Logger) (*App, error) {
 	cfg, err := Load()
 	if err != nil {
 		return nil, err
-	}
-	if err := clipboard.Init(); err != nil {
-		log.Warn("clipboard unavailable; copy to phone disabled", "err", err)
 	}
 	return &App{log: log, cfg: cfg}, nil
 }
@@ -58,7 +53,8 @@ func (a *App) Start(ctx context.Context) error {
 		"chrome", a.cfg.ChromeURL,
 		"chatID", a.chatID,
 		"pdf", a.cfg.SendPDF,
-		"hotkey", a.cfg.Hotkey)
+		"hotkey", a.cfg.Hotkey,
+		"selector", a.cfg.HTMLSelector)
 	return nil
 }
 

@@ -19,7 +19,6 @@ type Capture struct {
 	URL   string
 	Title string
 	HTML  string
-	Text  string
 	PDF   []byte
 }
 
@@ -47,7 +46,7 @@ func (c *Client) Warmup(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) CaptureActiveTab(withPDF bool) (Capture, error) {
+func (c *Client) CaptureActiveTab(withPDF bool, selector string) (Capture, error) {
 	t, err := c.focusedTarget()
 	if err != nil {
 		return Capture{}, err
@@ -62,8 +61,10 @@ func (c *Client) CaptureActiveTab(withPDF bool) (Capture, error) {
 	actions := []chromedp.Action{
 		chromedp.Evaluate(`location.href`, &cap.URL),
 		chromedp.Title(&cap.Title),
-		chromedp.Evaluate(`document.documentElement.outerHTML`, &cap.HTML),
-		chromedp.Evaluate(`document.body ? document.body.innerText : ''`, &cap.Text),
+		chromedp.Evaluate(fmt.Sprintf(`(function (sel) {
+			var el = document.querySelector(sel);
+			return el ? el.outerHTML : '';
+		})(%q)`, selector), &cap.HTML),
 	}
 	if withPDF {
 		actions = append(actions, chromedp.ActionFunc(func(ctx context.Context) error {
@@ -82,6 +83,9 @@ func (c *Client) CaptureActiveTab(withPDF bool) (Capture, error) {
 		}
 		cap.PDF = nil
 		return cap, fmt.Errorf("render pdf: %w", err)
+	}
+	if cap.HTML == "" {
+		return Capture{}, fmt.Errorf("no element matches selector %q on %s", selector, clip(t.URL, 60))
 	}
 	return cap, nil
 }

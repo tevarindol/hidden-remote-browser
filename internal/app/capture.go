@@ -2,9 +2,6 @@ package app
 
 import (
 	"context"
-	"time"
-
-	"golang.design/x/clipboard"
 
 	"github.com/tevarindol/hidden-remote-browser/internal/telegram"
 )
@@ -12,21 +9,11 @@ import (
 func (a *App) capture(ctx context.Context) {
 	a.log.Info("capture triggered", "vk", a.cfg.Hotkey)
 
-	cap, err := a.client.CaptureActiveTab(a.cfg.SendPDF)
+	cap, err := a.client.CaptureActiveTab(a.cfg.SendPDF, a.cfg.HTMLSelector)
 	if err != nil {
 		a.log.Error("chrome capture failed", "err", err)
 		if cap.HTML == "" {
 			return
-		}
-	}
-
-	if cap.Text != "" {
-		wctx, wcancel := context.WithTimeout(ctx, 5*time.Second)
-		defer wcancel()
-		if _, err := clipboard.Write(wctx, clipboard.FmtText, []byte(cap.Text)); err != nil {
-			a.log.Error("clipboard write failed", "err", err)
-		} else {
-			a.log.Info("text copied to clipboard")
 		}
 	}
 

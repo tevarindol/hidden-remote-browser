@@ -11,6 +11,7 @@ type Config struct {
 	ChromeURL     string `env:"CHROME_URL" envDefault:"http://localhost:9222"`
 	Hotkey        string `env:"HOTKEY" envDefault:"120"`
 	SendPDF       bool   `env:"SEND_PDF" envDefault:"false"`
+	HTMLSelector  string `env:"HTML_SELECTOR" envDefault:"main"`
 }
 
 func Load() (Config, error) {
