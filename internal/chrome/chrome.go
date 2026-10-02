@@ -3,12 +3,10 @@ package chrome
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/proto"
 )
 
 const (
@@ -20,7 +18,7 @@ type Capture struct {
 	URL   string
 	Title string
 	HTML  string
-	PDF   []byte
+	PNG   []byte
 }
 
 type Client struct {
@@ -50,7 +48,7 @@ func (c *Client) Warmup(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) CaptureActiveTab(withPDF bool, selector string) (Capture, error) {
+func (c *Client) CaptureActiveTab(withPhoto bool, selector string) (Capture, error) {
 	p, err := c.focusedPage()
 	if err != nil {
 		return Capture{}, err
@@ -72,20 +70,15 @@ func (c *Client) CaptureActiveTab(withPDF bool, selector string) (Capture, error
 	}
 
 	cap := Capture{URL: info.URL, Title: info.Title, HTML: html}
-	if !withPDF {
+	if !withPhoto {
 		return cap, nil
 	}
 
-	sr, err := p.PDF(&proto.PagePrintToPDF{PrintBackground: true})
+	png, err := p.Screenshot(false, nil)
 	if err != nil {
-		return cap, fmt.Errorf("render pdf: %w", err)
+		return cap, fmt.Errorf("screenshot: %w", err)
 	}
-	defer sr.Close()
-	pdf, err := io.ReadAll(sr)
-	if err != nil {
-		return cap, fmt.Errorf("read pdf: %w", err)
-	}
-	cap.PDF = pdf
+	cap.PNG = png
 	return cap, nil
 }
 

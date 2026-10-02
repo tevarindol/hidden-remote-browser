@@ -26,7 +26,7 @@ type Page struct {
 	Title string
 	URL   string
 	HTML  string
-	PDF   []byte
+	PNG   []byte
 }
 
 func (s *Sender) SendPage(ctx context.Context, p Page) error {
@@ -37,12 +37,12 @@ func (s *Sender) SendPage(ctx context.Context, p Page) error {
 		return fmt.Errorf("send html: %w", err)
 	}
 
-	if len(p.PDF) > 0 {
+	if len(p.PNG) > 0 {
 		if _, err := s.api.SendDocument(ctx, &bot.SendDocumentParams{
 			ChatID:   s.ChatID,
-			Document: &models.InputFileUpload{Filename: "Task.pdf", Data: bytes.NewReader(p.PDF)},
+			Document: &models.InputFileUpload{Filename: "Task.png", Data: bytes.NewReader(p.PNG)},
 		}); err != nil {
-			return fmt.Errorf("send pdf: %w", err)
+			return fmt.Errorf("send png: %w", err)
 		}
 	}
 	return nil

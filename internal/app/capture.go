@@ -9,7 +9,7 @@ import (
 func (a *App) capture(ctx context.Context) {
 	a.log.Info("capture triggered")
 
-	cap, err := a.client.CaptureActiveTab(a.cfg.SendPDF, a.cfg.HTMLSelector)
+	cap, err := a.client.CaptureActiveTab(a.cfg.SendPhoto, a.cfg.HTMLSelector)
 	if err != nil {
 		a.log.Error("chrome capture failed", "err", err)
 		if cap.HTML == "" {
@@ -21,7 +21,7 @@ func (a *App) capture(ctx context.Context) {
 		Title: cap.Title,
 		URL:   cap.URL,
 		HTML:  cap.HTML,
-		PDF:   cap.PDF,
+		PNG:   cap.PNG,
 	}); err != nil {
 		a.log.Error("telegram send failed", "err", err)
 	}
