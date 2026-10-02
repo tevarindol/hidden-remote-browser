@@ -1,0 +1,40 @@
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.1"
+
+      - name: Install X11 headers
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev
+
+      - name: Build app.exe
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H=windowsgui" -o app.exe ./cmd/app
+
+      - name: Build app-hidden.exe
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o app-hidden.exe ./cmd/app
+
+      - name: Build app-linux
+        run: CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o app-linux ./cmd/app
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app.exe
+            app-hidden.exe
+            app-linux
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
