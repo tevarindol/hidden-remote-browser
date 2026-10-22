@@ -1,3 +1,7 @@
 .idea
 .env*
 !.env.example
+
+# Added by cargo
+
+/target
