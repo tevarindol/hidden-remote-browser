@@ -10,8 +10,6 @@ const PHOTO_FILENAME: &str = "screen.png";
 
 #[wasm_bindgen]
 extern "C" {
-    // top-level `fetch`: `web_sys::window()` is null in a service worker,
-    // so there is no web-sys path to it from the background context.
     #[wasm_bindgen(js_name = fetch)]
     fn js_fetch(input: &JsValue, init: &JsValue) -> Promise;
 }

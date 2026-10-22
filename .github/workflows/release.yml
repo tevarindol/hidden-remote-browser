@@ -1,0 +1,65 @@
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Build wasm bindings
+        run: wasm-pack build --target web --release --out-dir extension/pkg
+
+      - name: Compile extension scripts
+        run: bun install --frozen-lockfile && bun run build
+
+      - name: Resolve version
+        id: ver
+        run: |
+          ref="${GITHUB_REF_NAME}"
+          case "$ref" in
+            v*) echo "version=${ref#v}" >>"$GITHUB_OUTPUT" ;;
+            *)  echo "version=0.0.0-${ref//\//_}" >>"$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Stamp manifest version
+        run: 'sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" extension/manifest.json'
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+
+      - name: Package extension
+        run: zip -r "../hidden-remote-browser-${VERSION}.zip" .
+        working-directory: extension
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+
+      - name: Upload extension zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: hidden-remote-browser-extension
+          path: hidden-remote-browser-*.zip
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: hidden-remote-browser-*.zip
+          generate_release_notes: true

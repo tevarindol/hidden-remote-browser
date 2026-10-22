@@ -1,7 +1,6 @@
 import init, { sendToTelegram } from "./pkg/hidden_remote_browser.js";
 import type { ExtractRequest, KeydownForward, Settings } from "./types.js";
 
-// Mirrors `impl Default for Settings` in src/config.rs.
 const DEFAULT_SETTINGS: Settings = {
   telegramToken: "",
   chatId: "",
@@ -19,13 +18,11 @@ const wasmReady = init();
 
 function parseSettings(stored: Record<string, unknown>): Settings {
   const raw = stored.settings ?? "";
-  // older builds stored the settings as a JSON string
   const partial: Partial<Settings> =
     typeof raw === "string" ? (raw ? JSON.parse(raw) : {}) : raw;
   return {
     telegramToken: partial.telegramToken ?? DEFAULT_SETTINGS.telegramToken,
     chatId: partial.chatId ?? DEFAULT_SETTINGS.chatId,
-    // empty strings fall back to defaults, matching the `|| default` reads in Rust
     htmlSelector: partial.htmlSelector || DEFAULT_SETTINGS.htmlSelector,
     hotkeyCode: partial.hotkeyCode || DEFAULT_SETTINGS.hotkeyCode,
     hotkeyCtrl: !!partial.hotkeyCtrl,

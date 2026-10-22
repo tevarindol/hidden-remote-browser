@@ -17,16 +17,17 @@ A Chrome (Manifest V3) extension that captures the page you are looking at and s
 
 ## How it works
 
-- `content.js` injects into every page and forwards raw keydowns (code + modifiers, no policy) to the extension.
+- `content.js` injects into every page and forwards raw keydowns (`code` and modifiers only, no filtering) to the extension.
 - `bg.js` (service worker) is the orchestrator: it reads the saved settings, matches the hotkey, asks the tab to extract the element, optionally captures the visible tab, and calls into WASM.
 - `sendToTelegram` (Rust/WASM) uploads the result to the Telegram Bot API via `sendDocument` / `sendPhoto`.
 - The options page is a Leptos app; settings persist in `chrome.storage.local`.
 
 ## Install
 
-1. Build the extension (see [Build from source](#build-from-source)) or take an existing `extension/` directory with a generated `pkg/`.
-2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, select the `extension/` directory.
-3. Open the extension's **Extension options** page and fill in the bot token and chat id, then Save.
+Grab `hidden-remote-browser-vX.Y.Z.zip` from [Releases](https://github.com/tevarindol/hidden-remote-browser/releases) and unpack it; the manifest is at the zip root. Alternatively build the `extension/` directory yourself (see [Build from source](#build-from-source)).
+
+1. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the unpacked extension directory.
+2. Open the extension's **Extension options** page, fill in the bot token and chat id, then Save.
 
 ## Configuration
 
@@ -36,27 +37,26 @@ Options page fields (stored under the `settings` key in `chrome.storage.local`):
 - **Chat id** (required): chat or group id that receives captures; groups are supported
 - **CSS selector** (default `main`): element sent as `send.html`
 - **Hotkey** (default `NumpadSubtract`): a `KeyboardEvent.code` value, plus optional Ctrl/Alt/Shift flags; keys typed into inputs/textareas and modifier-only presses are ignored
-- **Send screenshot** (off by default): also attach a viewport screenshot as `screen.png` (needs the page to be visible, the capture targets the active tab)
+- **Send screenshot** (off by default): also attach a viewport screenshot as `screen.png` (the capture takes the visible active tab)
 
 ## Hotkey
 
-Press the configured key on any normal web page (not `chrome://` or the Web Store — content scripts do not run there, and tabs opened before the extension was loaded need a refresh). The default browser action of the key is not suppressed: matching happens asynchronously in the service worker.
+Press the configured key on any normal web page. Content scripts do not run on `chrome://` pages or in the Web Store, and tabs opened before the extension was loaded need a refresh. The default browser action of the key is not suppressed: matching happens asynchronously in the service worker.
 
 ## Build from source
 
-Prerequisites: Rust with the `wasm32-unknown-unknown` target, `wasm-bindgen-cli` matching the crate version in `Cargo.toml` (currently 0.2.129), and [bun](https://bun.sh).
+Prerequisites: Rust with the `wasm32-unknown-unknown` target, `wasm-pack` (it picks and downloads the `wasm-bindgen` version matching the crate), and [bun](https://bun.sh).
 
 ```bash
-cargo build --target wasm32-unknown-unknown --release
-wasm-bindgen --target web --out-dir extension/pkg \
-  target/wasm32-unknown-unknown/release/hidden_remote_browser.wasm
+cargo install wasm-pack --locked   # once
+wasm-pack build --target web --release --out-dir extension/pkg
 bun install
 bun run build   # tsc: extension/*.ts -> extension/*.js
 ```
 
-`extension/pkg/` and the emitted `extension/*.js` are generated and gitignored; the `.ts` files and `src/*.rs` are the sources. After rebuilding, reload the unpacked extension in Chrome — and if the service worker logs `wasm_bindgen_<hash>... is not a function`, fully restart Chrome: it kept a stale `pkg` glue module from before the rebuild.
+`extension/pkg/` and the emitted `extension/*.js` are generated and gitignored; the `.ts` files and `src/*.rs` are the sources. After rebuilding, reload the unpacked extension in Chrome. If the service worker logs `wasm_bindgen_<hash>... is not a function`, Chrome kept a stale `pkg` glue module from before the rebuild; a full browser restart clears it.
 
-There is no CI and no test suite yet; the crate is linted with default `cargo clippy`/`cargo fmt`.
+Pushing a `v*.*.*` tag runs the GitHub Actions release workflow: it builds the chain above on a clean checkout, stamps the tag into `extension/manifest.json`, and attaches the zip to the release. There is no test suite; `cargo clippy` and `cargo fmt` run with default settings.
 
 ## License
 
