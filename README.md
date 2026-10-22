@@ -1,70 +1,62 @@
 # hidden-remote-browser
 
-![Go](https://img.shields.io/badge/Go-1.27.1-00ADD8?logo=go&logoColor=white)
-![Release](https://img.shields.io/github/v/release/tevarindol/hidden-remote-browser)
+![Rust](https://img.shields.io/badge/Rust-wasm32-000000?logo=rust&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-extension-3178C6?logo=typescript&logoColor=white)
+![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=chromegoogle&logoColor=white)
 
-Capture the Chrome tab you have open and send it to Telegram; the tool attaches to a running Chrome via CDP, reads the active tab, and exits. It sends `Task.html` (the `outerHTML` of the first element matching `HTML_SELECTOR`) plus an optional viewport screenshot `Task.png` (`SEND_PHOTO`). The running Chrome is never closed or navigated.
+A Chrome (Manifest V3) extension that captures the page you are looking at and sends it to a Telegram chat: a hotkey grabs the `outerHTML` of the first element matching a CSS selector and uploads it as `send.html`, optionally with a viewport screenshot `screen.png`. Written in Rust→WASM (Leptos CSR options page) with plain TypeScript for the background/content scripts.
 
 ## Contents
 
-- [Description](#description)
-- [Installation](#installation)
-- [Build](#build)
-- [Hotkey](#hotkey)
+- [How it works](#how-it-works)
+- [Install](#install)
 - [Configuration](#configuration)
+- [Hotkey](#hotkey)
+- [Build from source](#build-from-source)
 - [License](#license)
 
-## Description
+## How it works
 
-- Attaches to a running Chrome through the DevTools protocol (`--remote-debugging-port`), probes open tabs and picks the focused/visible one.
-- Sends two files to the Telegram chat: `Task.html` (always) and `Task.png` (viewport screenshot, when `SEND_PHOTO=true`).
-- Pure Go, no cgo; runs once per invocation and exits with status `0` (success) or `1` (failure).
+- `content.js` injects into every page and forwards raw keydowns (code + modifiers, no policy) to the extension.
+- `bg.js` (service worker) is the orchestrator: it reads the saved settings, matches the hotkey, asks the tab to extract the element, optionally captures the visible tab, and calls into WASM.
+- `sendToTelegram` (Rust/WASM) uploads the result to the Telegram Bot API via `sendDocument` / `sendPhoto`.
+- The options page is a Leptos app; settings persist in `chrome.storage.local`.
 
-## Installation
+## Install
 
-Grab a prebuilt binary from [Releases](https://github.com/tevarindol/hidden-remote-browser/releases):
-
-- `hidden-remote-browser-hidden-x86_64.exe` (Windows, no console window flash)
-- `hidden-remote-browser-x86_64.exe` (Windows console)
-- `hidden-remote-browser-x86_64` (Linux)
-
-Chrome (136+) must run with the debugging port:
-
-```
-chrome.exe --remote-debugging-port=9222
-```
-
-Log into the needed sites inside that Chrome instance once. Place a `.env` file (copy `.env.example`) next to the executable.
-
-## Build
-
-```bash
-GOTOOLCHAIN=auto go build ./cmd/app
-GOTOOLCHAIN=auto go test ./...
-```
-
-Windows cross-build (pure Go, no cgo):
-
-```bash
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build ./cmd/app
-```
-
-Pushing a `v*.*.*` tag triggers GitHub Actions, which builds and publishes the release binaries listed above.
-
-## Hotkey
-
-`scripts/hotkey.ahk` (AutoHotkey v2) launches the capture on the numpad minus key (`NumpadSub`). Put the hidden exe next to the script or edit the path inside.
+1. Build the extension (see [Build from source](#build-from-source)) or take an existing `extension/` directory with a generated `pkg/`.
+2. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, select the `extension/` directory.
+3. Open the extension's **Extension options** page and fill in the bot token and chat id, then Save.
 
 ## Configuration
 
-Copy `.env.example` to `.env` next to the binary (real environment variables win over the file):
+Options page fields (stored under the `settings` key in `chrome.storage.local`):
 
-- `TELEGRAM_TOKEN` (required): bot token from [@BotFather](https://t.me/BotFather)
-- `TG_CHAT_ID` (required): chat or group id that receives captures; groups are supported
-- `CHROME_URL` (default `http://localhost:9222`): Chrome CDP endpoint
-- `SEND_PHOTO` (default `false`): attach a viewport screenshot as `Task.png`
-- `HTML_SELECTOR` (default `main`): CSS selector of the element sent as `Task.html`
-- `KDE_DEVICE_ID` (optional): Android device id from `kdeconnect-cli -a --id-only`. When set, the capture HTML is also shared to the phone with `kdeconnect-cli --share-text` (requires the KDE Connect daemon running and paired with the phone).
+- **Telegram bot token** (required): get one from [@BotFather](https://t.me/BotFather)
+- **Chat id** (required): chat or group id that receives captures; groups are supported
+- **CSS selector** (default `main`): element sent as `send.html`
+- **Hotkey** (default `NumpadSubtract`): a `KeyboardEvent.code` value, plus optional Ctrl/Alt/Shift flags; keys typed into inputs/textareas and modifier-only presses are ignored
+- **Send screenshot** (off by default): also attach a viewport screenshot as `screen.png` (needs the page to be visible, the capture targets the active tab)
+
+## Hotkey
+
+Press the configured key on any normal web page (not `chrome://` or the Web Store — content scripts do not run there, and tabs opened before the extension was loaded need a refresh). The default browser action of the key is not suppressed: matching happens asynchronously in the service worker.
+
+## Build from source
+
+Prerequisites: Rust with the `wasm32-unknown-unknown` target, `wasm-bindgen-cli` matching the crate version in `Cargo.toml` (currently 0.2.129), and [bun](https://bun.sh).
+
+```bash
+cargo build --target wasm32-unknown-unknown --release
+wasm-bindgen --target web --out-dir extension/pkg \
+  target/wasm32-unknown-unknown/release/hidden_remote_browser.wasm
+bun install
+bun run build   # tsc: extension/*.ts -> extension/*.js
+```
+
+`extension/pkg/` and the emitted `extension/*.js` are generated and gitignored; the `.ts` files and `src/*.rs` are the sources. After rebuilding, reload the unpacked extension in Chrome — and if the service worker logs `wasm_bindgen_<hash>... is not a function`, fully restart Chrome: it kept a stale `pkg` glue module from before the rebuild.
+
+There is no CI and no test suite yet; the crate is linted with default `cargo clippy`/`cargo fmt`.
 
 ## License
 
