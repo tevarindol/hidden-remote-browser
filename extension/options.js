@@ -1,2 +1,4 @@
-import init from "./pkg/hidden_remote_browser.js";
-init();
+import init, { mountOptions } from "./pkg/hidden_remote_browser.js";
+
+await init();
+mountOptions();
