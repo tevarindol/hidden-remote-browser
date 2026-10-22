@@ -1,5 +1,4 @@
 import init, { sendToTelegram } from "./pkg/hidden_remote_browser.js";
-import type { ExtractRequest, KeydownForward, Settings } from "./types.js";
 
 const DEFAULT_SETTINGS: Settings = {
   telegramToken: "",

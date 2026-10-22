@@ -1,5 +1,5 @@
 
-export interface Settings {
+interface Settings {
   telegramToken: string;
   chatId: string;
   htmlSelector: string;
@@ -10,7 +10,7 @@ export interface Settings {
   sendPhoto: boolean;
 }
 
-export interface KeydownForward {
+interface KeydownForward {
   type: "hrb-keydown";
   code: string;
   ctrlKey: boolean;
@@ -20,7 +20,7 @@ export interface KeydownForward {
   typing: boolean;
 }
 
-export interface ExtractRequest {
+interface ExtractRequest {
   type: "hrb-extract";
   selector: string;
 }

@@ -1,5 +1,3 @@
-import type { ExtractRequest, KeydownForward } from "./types.js";
-
 document.addEventListener(
   "keydown",
   (event: KeyboardEvent) => {

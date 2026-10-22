@@ -10,4 +10,3 @@ node_modules/
 /extension/bg.js
 /extension/content.js
 /extension/options.js
-/extension/types.js
