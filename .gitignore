@@ -5,3 +5,10 @@
 # Added by cargo
 
 /target
+node_modules/
+
+# emitted by `bun run build` (tsc) from extension/*.ts
+/extension/bg.js
+/extension/content.js
+/extension/options.js
+/extension/types.js
