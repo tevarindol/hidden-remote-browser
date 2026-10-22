@@ -25,7 +25,7 @@ impl Default for Settings {
             telegram_token: String::new(),
             chat_id: String::new(),
             html_selector: "main".to_string(),
-            hotkey_code: "NumpadSub".to_string(),
+            hotkey_code: "NumpadSubtract".to_string(),
             hotkey_ctrl: false,
             hotkey_alt: false,
             hotkey_shift: false,

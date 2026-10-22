@@ -15,7 +15,7 @@ function isHotkey(event, settings) {
   if (event.repeat || event.typing) return false;
   if (MODIFIER_CODES.includes(event.code)) return false;
   return (
-    event.code === (settings.hotkeyCode || "NumpadSub") &&
+    event.code === (settings.hotkeyCode || "NumpadSubtract") &&
     !!event.ctrlKey === !!settings.hotkeyCtrl &&
     !!event.altKey === !!settings.hotkeyAlt &&
     !!event.shiftKey === !!settings.hotkeyShift

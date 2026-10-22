@@ -7,7 +7,7 @@ pub fn App() -> impl IntoView {
     let telegram_token = RwSignal::new(String::new());
     let chat_id = RwSignal::new(String::new());
     let html_selector = RwSignal::new("main".to_string());
-    let hotkey_code = RwSignal::new("NumpadSub".to_string());
+    let hotkey_code = RwSignal::new("NumpadSubtract".to_string());
     let hotkey_ctrl = RwSignal::new(false);
     let hotkey_alt = RwSignal::new(false);
     let hotkey_shift = RwSignal::new(false);
@@ -67,8 +67,8 @@ pub fn App() -> impl IntoView {
                 <input r#type="text" placeholder="main" style="width: 100%" bind:value=html_selector />
             </label>
             <label>
-                "Hotkey (KeyboardEvent.code, e.g. NumpadSub)"
-                <input r#type="text" placeholder="NumpadSub" style="width: 100%" bind:value=hotkey_code />
+                "Hotkey (KeyboardEvent.code, e.g. NumpadSubtract)"
+                <input r#type="text" placeholder="NumpadSubtract" style="width: 100%" bind:value=hotkey_code />
             </label>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap">
                 <label>
