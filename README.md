@@ -25,7 +25,7 @@ A Chrome (Manifest V3) extension that captures the page you are looking at and s
 
 ## Install
 
-Grab `hidden-remote-browser-vX.Y.Z.zip` from [Releases](https://github.com/tevarindol/hidden-remote-browser/releases) and unpack it; the manifest is at the zip root. Alternatively build the `extension/` directory yourself (see [Build from source](#build-from-source)).
+Grab `hidden-remote-browser-extension.zip` from [Releases](https://github.com/tevarindol/hidden-remote-browser/releases) and unpack it; the manifest is at the zip root. Alternatively build the `extension/` directory yourself (see [Build from source](#build-from-source)).
 
 1. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the unpacked extension directory.
 2. Open the extension's **Extension options** page, fill in the bot token and chat id, then Save.
@@ -56,7 +56,7 @@ wasm-pack build --target no-modules --no-typescript --release --out-dir extensio
 
 The single `no-modules` WASM package is shared by the service worker, options page, and content script. `extension/pkg/` is generated; the `.rs` files and JavaScript bootstraps are the sources. After rebuilding, reload the unpacked extension in Chrome.
 
-Pushing a `v*.*.*` tag runs the GitHub Actions release workflow: it builds the chain above on a clean checkout, stamps the tag into `extension/manifest.json`, and attaches the zip to the release. There is no test suite; `cargo clippy` and `cargo fmt` run with default settings.
+Set the version in `extension/manifest.json` before release, then push the matching `vX.Y.Z` tag. The GitHub Actions workflow checks that the tag matches the manifest, builds the extension, and attaches a zip to the release without rewriting source files. Manual workflow runs build the current manifest version as an artifact. There is no test suite; `cargo clippy` and `cargo fmt` run with default settings.
 
 ## License
 
