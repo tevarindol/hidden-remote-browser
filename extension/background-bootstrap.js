@@ -2,6 +2,10 @@ importScripts(chrome.runtime.getURL("pkg/hidden_remote_browser.js"));
 
 const pendingMessages = [];
 let wasmReady = false;
+const commandProviders = {
+  "capture-gemini": "gemini",
+  "capture-claude": "claude",
+};
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== "hrb-page-captured") return false;
@@ -13,7 +17,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.commands.onCommand.addListener((command) => {
-  if (command !== "capture-page") return;
+  const provider = commandProviders[command];
+  if (!provider) return;
 
   chrome.tabs
     .query({ active: true, lastFocusedWindow: true })
@@ -21,7 +26,10 @@ chrome.commands.onCommand.addListener((command) => {
       if (typeof tab?.id !== "number") {
         throw new Error("No active tab is available for capture");
       }
-      return chrome.tabs.sendMessage(tab.id, { type: "hrb-capture-page" });
+      return chrome.tabs.sendMessage(tab.id, {
+        type: "hrb-capture-page",
+        provider,
+      });
     })
     .then((response) => {
       if (!response?.ok) {

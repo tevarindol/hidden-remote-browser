@@ -7,7 +7,7 @@ pub fn App() -> impl IntoView {
     let telegram_token = RwSignal::new(String::new());
     let chat_id = RwSignal::new(String::new());
     let html_selector = RwSignal::new("main".to_string());
-    let ai_provider = RwSignal::new(crate::config::AI_PROVIDER_GEMINI.to_string());
+    let ai_enabled = RwSignal::new(true);
     let send_photo = RwSignal::new(false);
     let prompt_template = RwSignal::new(Settings::default().prompt_template);
     let status = RwSignal::new(String::new());
@@ -19,7 +19,7 @@ pub fn App() -> impl IntoView {
                     telegram_token.set(settings.telegram_token);
                     chat_id.set(settings.chat_id);
                     html_selector.set(settings.html_selector);
-                    ai_provider.set(settings.ai_provider);
+                    ai_enabled.set(settings.ai_enabled);
                     send_photo.set(settings.send_photo);
                     prompt_template.set(settings.prompt_template);
                 }
@@ -33,7 +33,7 @@ pub fn App() -> impl IntoView {
             telegram_token: telegram_token.get(),
             chat_id: chat_id.get(),
             html_selector: html_selector.get(),
-            ai_provider: ai_provider.get(),
+            ai_enabled: ai_enabled.get(),
             send_photo: send_photo.get(),
             prompt_template: prompt_template.get(),
         };
@@ -61,18 +61,16 @@ pub fn App() -> impl IntoView {
                 <input r#type="text" placeholder="main" style="width: 100%" bind:value=html_selector />
             </label>
             <label>
-                "AI service"
-                <select style="width: 100%" bind:value=ai_provider>
-                    <option value="gemini">"Gemini"</option>
-                    <option value="claude">"Claude"</option>
-                </select>
+                "Use AI services (Gemini and Claude)"
+                <input r#type="checkbox" bind:checked=ai_enabled />
+                <small>"When off, captures can still be sent to Telegram."</small>
             </label>
             <label>
                 "AI prompt template"
                 <textarea rows="8" style="width: 100%" bind:value=prompt_template />
                 <small>"Use {url} for the page URL and {html} for the captured element."</small>
             </label>
-            <p>"Keyboard shortcut: Ctrl+Shift+Y by default. Change it in chrome://extensions/shortcuts."</p>
+            <p>"Use the Gemini or Claude keyboard shortcut to capture the active tab. Gemini defaults to Ctrl+Shift+Y; configure both shortcuts in chrome://extensions/shortcuts."</p>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap">
                 <label>
                     "Send screenshot"

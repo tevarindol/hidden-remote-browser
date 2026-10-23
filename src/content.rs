@@ -58,8 +58,8 @@ fn handle_message(document: &Document) -> Closure<dyn FnMut(JsValue, JsValue, Fu
                     );
                     true
                 }
-                ExtensionMessage::CapturePage => {
-                    respond_with_result(send_response, capture_page(document.clone()));
+                ExtensionMessage::CapturePage { provider } => {
+                    respond_with_result(send_response, capture_page(document.clone(), provider));
                     true
                 }
                 ExtensionMessage::PageCaptured { .. } => false,
@@ -68,7 +68,10 @@ fn handle_message(document: &Document) -> Closure<dyn FnMut(JsValue, JsValue, Fu
     ))
 }
 
-async fn capture_page(document: Document) -> Result<(), String> {
+async fn capture_page(
+    document: Document,
+    provider: crate::messages::AIProvider,
+) -> Result<(), String> {
     let settings = config::load().await?;
     let element = document
         .query_selector(&settings.html_selector)
@@ -81,6 +84,7 @@ async fn capture_page(document: Document) -> Result<(), String> {
         })?;
     let message = ExtensionMessage::PageCaptured {
         html: element.outer_html(),
+        provider,
     };
     chrome_api::send_runtime_message(&message).await
 }

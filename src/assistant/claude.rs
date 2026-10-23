@@ -88,8 +88,7 @@ async fn wait_for_claude_send_button(timeout_ms: f64) -> Result<HtmlButtonElemen
     while js_sys::Date::now() < deadline {
         if let Some(button) = find_claude_send_button()? {
             let aria_disabled = button.get_attribute("aria-disabled");
-            let trigger_disabled = button.has_attribute("data-trigger-disabled");
-            if !button.disabled() && aria_disabled.as_deref() != Some("true") && !trigger_disabled {
+            if !button.disabled() && aria_disabled.as_deref() != Some("true") {
                 return Ok(button);
             }
         }

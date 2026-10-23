@@ -5,10 +5,14 @@ use wasm_bindgen_futures::spawn_local;
 use crate::{
     chrome_api,
     config,
-    messages::{ExtensionMessage, MessageResponse},
+    messages::{AIProvider, ExtensionMessage, MessageResponse},
 };
 
-async fn handle_captured_page(html: String, sender: JsValue) -> Result<(), String> {
+async fn handle_captured_page(
+    html: String,
+    provider: AIProvider,
+    sender: JsValue,
+) -> Result<(), String> {
     let settings = config::load().await?;
     let tab = chrome_api::tab_context(&sender)?;
 
@@ -25,15 +29,21 @@ async fn handle_captured_page(html: String, sender: JsValue) -> Result<(), Strin
         None
     };
 
-    let ai_provider = settings.ai_provider.clone();
+    let ai_enabled = settings.ai_enabled;
     let ai_html = html.clone();
     let ai_url = tab.url;
     let prompt_template = settings.prompt_template.clone();
     let assistant_future = async move {
-        if ai_provider == config::AI_PROVIDER_CLAUDE {
-            crate::assistant::send_to_claude(ai_html, ai_url, prompt_template).await
-        } else {
-            crate::assistant::send_to_gemini(ai_html, ai_url, prompt_template).await
+        if !ai_enabled {
+            return Ok(());
+        }
+        match provider {
+            AIProvider::Claude => {
+                crate::assistant::send_to_claude(ai_html, ai_url, prompt_template).await
+            }
+            AIProvider::Gemini => {
+                crate::assistant::send_to_gemini(ai_html, ai_url, prompt_template).await
+            }
         }
     };
     let telegram_settings = settings.clone();
@@ -75,12 +85,12 @@ pub fn handle_message(message: JsValue, sender: JsValue, send_response: Function
     let Ok(event) = serde_wasm_bindgen::from_value::<ExtensionMessage>(message) else {
         return false;
     };
-    let ExtensionMessage::PageCaptured { html } = event else {
+    let ExtensionMessage::PageCaptured { html, provider } = event else {
         return false;
     };
 
     spawn_local(async move {
-        match handle_captured_page(html, sender).await {
+        match handle_captured_page(html, provider, sender).await {
             Ok(()) => respond(
                 &send_response,
                 &MessageResponse {

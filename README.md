@@ -3,7 +3,7 @@
 ![Rust](https://img.shields.io/badge/Rust-wasm32-000000?logo=rust&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=chromegoogle&logoColor=white)
 
-A Chrome (Manifest V3) extension that captures the page you are looking at and sends it to a Telegram chat and the selected AI service (Gemini or Claude). A keyboard shortcut captures the `outerHTML` of the first element matching a CSS selector, uploads it to Telegram as `send.html` (optionally with a viewport screenshot `screen.png`), and opens a new AI chat to submit it for analysis. Extension behavior and the options UI are implemented in Rust→WASM; small JavaScript bootstraps load the WASM package in Chrome contexts.
+A Chrome (Manifest V3) extension that captures the page you are looking at and sends it to Telegram and optionally Gemini or Claude. Use provider-specific keyboard shortcuts to capture the `outerHTML` of the first element matching a CSS selector, upload it to Telegram as `send.html` (optionally with a viewport screenshot `screen.png`), and open a new chat with the chosen AI provider. Extension behavior and the options page are implemented in Rust→WASM; small JavaScript bootstraps load the WASM package in Chrome contexts.
 
 ## Contents
 
@@ -16,10 +16,11 @@ A Chrome (Manifest V3) extension that captures the page you are looking at and s
 
 ## How it works
 
-- `background-bootstrap.js` listens for the browser's `capture-page` command and asks the active tab's content script to capture the configured element.
+- `background-bootstrap.js` maps the Gemini and Claude keyboard shortcuts to provider-specific capture requests.
 - `content-bootstrap.js` starts the Rust/WASM content logic, which extracts the element and handles messages for Gemini and Claude.
-- Rust/WASM opens the selected AI service, enters the prompt, waits for the send control, and submits it. Sign in to the selected service before use; a fresh chat window opens for each capture.
+- Rust/WASM opens the requested AI service, enters the prompt, waits for the send control, and submits it. Sign in to the service before use; a fresh chat opens for each capture.
 - Rust/WASM uploads the result to the Telegram Bot API via `sendDocument` and optionally `sendPhoto`.
+- The options page includes one switch to enable or disable both AI services. When AI is disabled, captures can still be sent to Telegram.
 - The options page is a Leptos app; settings persist in `chrome.storage.local`.
 
 ## Install
@@ -36,13 +37,13 @@ Options page fields (stored under the `settings` key in `chrome.storage.local`):
 - **Telegram bot token** (required): get one from [@BotFather](https://t.me/BotFather)
 - **Chat id** (required): chat or group id that receives captures; groups are supported
 - **CSS selector** (default `main`): element sent as `send.html`
-- **AI service**: choose Gemini or Claude
+- **Use AI services**: enable or disable both Gemini and Claude
 - **AI prompt template**: prompt sent with the captured element; use `{url}` and `{html}` as placeholders
 - **Send screenshot** (off by default): also attach a viewport screenshot as `screen.png` (the capture takes the visible active tab)
 
 ## Hotkey
 
-The default shortcut is **Ctrl+Shift+Y**. Change it in `chrome://extensions/shortcuts`. The extension captures the selected element from the active tab, sends it to Telegram when Telegram credentials are configured, and opens a fresh chat with the selected AI service. Content scripts do not run on `chrome://` pages or in the Web Store, and tabs opened before the extension was loaded need a refresh.
+Use separate keyboard shortcuts to send a capture to Gemini or Claude. Gemini defaults to **Ctrl+Shift+Y**; assign or change both shortcuts in `chrome://extensions/shortcuts`. Captures are sent to Telegram when credentials are configured. Turning off **Use AI services** prevents either provider from opening or receiving the capture. Content scripts do not run on `chrome://` pages or in the Web Store, and tabs opened before the extension was loaded need a refresh.
 
 ## Build from source
 

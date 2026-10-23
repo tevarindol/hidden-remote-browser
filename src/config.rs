@@ -3,8 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::chrome_api;
 
 pub const STORAGE_KEY: &str = "settings";
-pub const AI_PROVIDER_GEMINI: &str = "gemini";
-pub const AI_PROVIDER_CLAUDE: &str = "claude";
 pub const DEFAULT_PROMPT_TEMPLATE: &str = "Базоий прмопт";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -14,7 +12,7 @@ pub struct Settings {
     pub telegram_token: String,
     pub chat_id: String,
     pub html_selector: String,
-    pub ai_provider: String,
+    pub ai_enabled: bool,
     pub send_photo: bool,
     #[serde(alias = "geminiPrompt")]
     pub prompt_template: String,
@@ -26,7 +24,7 @@ impl Default for Settings {
             telegram_token: String::new(),
             chat_id: String::new(),
             html_selector: "main".to_string(),
-            ai_provider: AI_PROVIDER_GEMINI.to_string(),
+            ai_enabled: true,
             send_photo: false,
             prompt_template: DEFAULT_PROMPT_TEMPLATE.to_string(),
         }
@@ -38,10 +36,6 @@ impl Settings {
         self.telegram_token = self.telegram_token.trim().to_string();
         self.chat_id = self.chat_id.trim().to_string();
         self.html_selector = self.html_selector.trim().to_string();
-        self.ai_provider = self.ai_provider.trim().to_ascii_lowercase();
-        if self.ai_provider != AI_PROVIDER_GEMINI && self.ai_provider != AI_PROVIDER_CLAUDE {
-            self.ai_provider = AI_PROVIDER_GEMINI.to_string();
-        }
         self.prompt_template = self.prompt_template.trim().to_string();
         if self.prompt_template.is_empty() {
             self.prompt_template = DEFAULT_PROMPT_TEMPLATE.to_string();

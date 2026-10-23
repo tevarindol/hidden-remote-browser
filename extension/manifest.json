@@ -5,9 +5,13 @@
   "permissions": ["storage"],
   "host_permissions": ["<all_urls>", "https://api.telegram.org/*"],
   "commands": {
-    "capture-page": {
+    "capture-gemini": {
       "suggested_key": { "default": "Ctrl+Shift+Y" },
-      "description": "Capture page and send it to the selected AI service"
+      "description": "Capture page and send it to Gemini"
+    },
+    "capture-claude": {
+      "suggested_key": { "default": "Ctrl+Shift+G" },
+      "description": "Capture page and send it to Claude"
     }
   },
   "options_page": "options.html",
