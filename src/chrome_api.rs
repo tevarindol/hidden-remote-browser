@@ -1,7 +1,11 @@
+use gloo_timers::future::TimeoutFuture;
 use js_sys::{Function, Object, Promise, Reflect};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
+
+const TAB_NAVIGATION_TIMEOUT_MS: f64 = 30_000.0;
+const TAB_POLL_INTERVAL_MS: u32 = 100;
 
 #[wasm_bindgen]
 extern "C" {
@@ -20,8 +24,17 @@ extern "C" {
     #[wasm_bindgen(catch, js_namespace = ["chrome", "tabs"], js_name = query)]
     fn tabs_query(query_info: &JsValue) -> Result<Promise, JsValue>;
 
+    #[wasm_bindgen(catch, js_namespace = ["chrome", "tabs"], js_name = update)]
+    fn tabs_update(tab_id: i32, update_properties: &JsValue) -> Result<Promise, JsValue>;
+
+    #[wasm_bindgen(catch, js_namespace = ["chrome", "tabs"], js_name = get)]
+    fn tabs_get(tab_id: i32) -> Result<Promise, JsValue>;
+
     #[wasm_bindgen(catch, js_namespace = ["chrome", "windows"], js_name = create)]
     fn windows_create(create_data: &JsValue) -> Result<Promise, JsValue>;
+
+    #[wasm_bindgen(catch, js_namespace = ["chrome", "windows"], js_name = update)]
+    fn windows_update(window_id: i32, update_info: &JsValue) -> Result<Promise, JsValue>;
 
     #[wasm_bindgen(catch, js_namespace = ["chrome", "runtime"], js_name = sendMessage)]
     fn runtime_send_message(message: &JsValue) -> Result<Promise, JsValue>;
@@ -66,13 +79,38 @@ struct WindowInfo {
 
 #[derive(Serialize)]
 struct TabsQueryOptions {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    url: Option<&'static str>,
     #[serde(rename = "windowId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    window_id: Option<i32>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TabInfo {
+    id: i32,
     window_id: i32,
 }
 
 #[derive(Deserialize)]
-struct TabInfo {
-    id: i32,
+#[serde(rename_all = "camelCase")]
+struct TabState {
+    #[serde(default)]
+    url: Option<String>,
+    #[serde(default)]
+    status: Option<String>,
+}
+
+#[derive(Serialize)]
+struct TabUpdateOptions {
+    url: &'static str,
+    active: bool,
+}
+
+#[derive(Serialize)]
+struct WindowUpdateOptions {
+    focused: bool,
 }
 
 fn js_error(error: JsValue) -> String {
@@ -144,7 +182,8 @@ async fn create_chat_tab(url: &'static str, error_message: &str) -> Result<i32, 
     let window: WindowInfo = from_js_value(resolve(windows_create(&options)).await?)?;
 
     let query = to_js_value(&TabsQueryOptions {
-        window_id: window.id,
+        url: None,
+        window_id: Some(window.id),
     })?;
     let tabs: Vec<TabInfo> = from_js_value(resolve(tabs_query(&query)).await?)?;
     tabs.into_iter()
@@ -153,12 +192,68 @@ async fn create_chat_tab(url: &'static str, error_message: &str) -> Result<i32, 
         .ok_or_else(|| error_message.to_string())
 }
 
+async fn find_chat_tab(url_pattern: &'static str) -> Result<Option<TabInfo>, String> {
+    let query = to_js_value(&TabsQueryOptions {
+        url: Some(url_pattern),
+        window_id: None,
+    })?;
+    let tabs: Vec<TabInfo> = from_js_value(resolve(tabs_query(&query)).await?)?;
+    Ok(tabs.into_iter().next())
+}
+
+async fn wait_for_tab_navigation(tab_id: i32, expected_url: &str) -> Result<(), String> {
+    let deadline = js_sys::Date::now() + TAB_NAVIGATION_TIMEOUT_MS;
+
+    while js_sys::Date::now() < deadline {
+        let tab: TabState = from_js_value(resolve(tabs_get(tab_id)).await?)?;
+        let url_matches = tab.url.as_deref().is_some_and(|url| {
+            url.trim_end_matches('/') == expected_url.trim_end_matches('/')
+        });
+
+        if url_matches && tab.status.as_deref() == Some("complete") {
+            return Ok(());
+        }
+
+        TimeoutFuture::new(TAB_POLL_INTERVAL_MS).await;
+    }
+
+    Err(format!("Chat page did not finish loading at {expected_url}"))
+}
+
+async fn open_chat_tab(
+    url: &'static str,
+    url_pattern: &'static str,
+    error_message: &str,
+) -> Result<i32, String> {
+    if let Some(tab) = find_chat_tab(url_pattern).await? {
+        let update = to_js_value(&TabUpdateOptions { url, active: true })?;
+        resolve(tabs_update(tab.id, &update)).await?;
+
+        let focus = to_js_value(&WindowUpdateOptions { focused: true })?;
+        resolve(windows_update(tab.window_id, &focus)).await?;
+        wait_for_tab_navigation(tab.id, url).await?;
+        return Ok(tab.id);
+    }
+
+    create_chat_tab(url, error_message).await
+}
+
 pub async fn create_gemini_tab() -> Result<i32, String> {
-    create_chat_tab("https://gemini.google.com/app", "Could not open a Gemini tab").await
+    open_chat_tab(
+        "https://gemini.google.com/app",
+        "https://gemini.google.com/*",
+        "Could not open a Gemini tab",
+    )
+    .await
 }
 
 pub async fn create_claude_tab() -> Result<i32, String> {
-    create_chat_tab("https://claude.ai/new", "Could not open a Claude tab").await
+    open_chat_tab(
+        "https://claude.ai/new",
+        "https://claude.ai/*",
+        "Could not open a Claude tab",
+    )
+    .await
 }
 
 pub async fn send_runtime_message<T: Serialize + ?Sized>(message: &T) -> Result<(), String> {
