@@ -108,7 +108,6 @@ async fn submit_prompt_in_claude_page(prompt: &str) -> Result<(), String> {
     }
 
     let editor = wait_for_claude_editor(30_000.0).await?;
-    editor.focus().map_err(js_err)?;
     if let Some(paragraph) = editor.query_selector("p").map_err(js_err)? {
         paragraph.set_text_content(Some(prompt));
     } else {

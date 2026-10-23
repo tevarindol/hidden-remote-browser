@@ -125,7 +125,6 @@ async fn submit_prompt_in_gemini_page(prompt: &str) -> Result<(), String> {
     }
 
     let editor = wait_for_gemini_editor(30_000.0).await?;
-    editor.focus().map_err(js_err)?;
     editor.set_text_content(Some(prompt));
 
     let input_init = InputEventInit::new();

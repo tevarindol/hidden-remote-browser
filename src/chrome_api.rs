@@ -33,9 +33,6 @@ extern "C" {
     #[wasm_bindgen(catch, js_namespace = ["chrome", "windows"], js_name = create)]
     fn windows_create(create_data: &JsValue) -> Result<Promise, JsValue>;
 
-    #[wasm_bindgen(catch, js_namespace = ["chrome", "windows"], js_name = update)]
-    fn windows_update(window_id: i32, update_info: &JsValue) -> Result<Promise, JsValue>;
-
     #[wasm_bindgen(catch, js_namespace = ["chrome", "runtime"], js_name = sendMessage)]
     fn runtime_send_message(message: &JsValue) -> Result<Promise, JsValue>;
 
@@ -90,7 +87,6 @@ struct TabsQueryOptions {
 #[serde(rename_all = "camelCase")]
 struct TabInfo {
     id: i32,
-    window_id: i32,
 }
 
 #[derive(Deserialize)]
@@ -105,12 +101,6 @@ struct TabState {
 #[derive(Serialize)]
 struct TabUpdateOptions {
     url: &'static str,
-    active: bool,
-}
-
-#[derive(Serialize)]
-struct WindowUpdateOptions {
-    focused: bool,
 }
 
 fn js_error(error: JsValue) -> String {
@@ -177,7 +167,7 @@ async fn create_chat_tab(url: &'static str, error_message: &str) -> Result<i32, 
     let options = to_js_value(&CreateWindowOptions {
         url,
         window_type: "normal",
-        focused: true,
+        focused: false,
     })?;
     let window: WindowInfo = from_js_value(resolve(windows_create(&options)).await?)?;
 
@@ -226,11 +216,9 @@ async fn open_chat_tab(
     error_message: &str,
 ) -> Result<i32, String> {
     if let Some(tab) = find_chat_tab(url_pattern).await? {
-        let update = to_js_value(&TabUpdateOptions { url, active: true })?;
+        let update = to_js_value(&TabUpdateOptions { url })?;
         resolve(tabs_update(tab.id, &update)).await?;
 
-        let focus = to_js_value(&WindowUpdateOptions { focused: true })?;
-        resolve(windows_update(tab.window_id, &focus)).await?;
         wait_for_tab_navigation(tab.id, url).await?;
         return Ok(tab.id);
     }
