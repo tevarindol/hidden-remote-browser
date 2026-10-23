@@ -1,10 +1,9 @@
 # hidden-remote-browser
 
 ![Rust](https://img.shields.io/badge/Rust-wasm32-000000?logo=rust&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-extension-3178C6?logo=typescript&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Chrome-Manifest%20V3-4285F4?logo=chromegoogle&logoColor=white)
 
-A Chrome (Manifest V3) extension that captures the page you are looking at and sends it to a Telegram chat: a hotkey grabs the `outerHTML` of the first element matching a CSS selector and uploads it as `send.html`, optionally with a viewport screenshot `screen.png`. Written in Rust→WASM (Leptos CSR options page) with plain TypeScript for the background/content scripts.
+A Chrome (Manifest V3) extension that captures the page you are looking at and sends it to a Telegram chat and the selected AI service (Gemini or Claude). A keyboard shortcut captures the `outerHTML` of the first element matching a CSS selector, uploads it to Telegram as `send.html` (optionally with a viewport screenshot `screen.png`), and opens a new AI chat to submit it for analysis. Extension behavior and the options UI are implemented in Rust→WASM; small JavaScript bootstraps load the WASM package in Chrome contexts.
 
 ## Contents
 
@@ -17,9 +16,10 @@ A Chrome (Manifest V3) extension that captures the page you are looking at and s
 
 ## How it works
 
-- `content.js` injects into every page and forwards raw keydowns (`code` and modifiers only, no filtering) to the extension.
-- `bg.js` (service worker) is the orchestrator: it reads the saved settings, matches the hotkey, asks the tab to extract the element, optionally captures the visible tab, and calls into WASM.
-- `sendToTelegram` (Rust/WASM) uploads the result to the Telegram Bot API via `sendDocument` / `sendPhoto`.
+- `background-bootstrap.js` listens for the browser's `capture-page` command and asks the active tab's content script to capture the configured element.
+- `content-bootstrap.js` starts the Rust/WASM content logic, which extracts the element and handles messages for Gemini and Claude.
+- Rust/WASM opens the selected AI service, enters the prompt, waits for the send control, and submits it. Sign in to the selected service before use; a fresh chat window opens for each capture.
+- Rust/WASM uploads the result to the Telegram Bot API via `sendDocument` and optionally `sendPhoto`.
 - The options page is a Leptos app; settings persist in `chrome.storage.local`.
 
 ## Install
@@ -36,25 +36,24 @@ Options page fields (stored under the `settings` key in `chrome.storage.local`):
 - **Telegram bot token** (required): get one from [@BotFather](https://t.me/BotFather)
 - **Chat id** (required): chat or group id that receives captures; groups are supported
 - **CSS selector** (default `main`): element sent as `send.html`
-- **Hotkey** (default `NumpadSubtract`): a `KeyboardEvent.code` value, plus optional Ctrl/Alt/Shift flags; keys typed into inputs/textareas and modifier-only presses are ignored
+- **AI service**: choose Gemini or Claude
+- **AI prompt template**: prompt sent with the captured element; use `{url}` and `{html}` as placeholders
 - **Send screenshot** (off by default): also attach a viewport screenshot as `screen.png` (the capture takes the visible active tab)
 
 ## Hotkey
 
-Press the configured key on any normal web page. Content scripts do not run on `chrome://` pages or in the Web Store, and tabs opened before the extension was loaded need a refresh. The default browser action of the key is not suppressed: matching happens asynchronously in the service worker.
+The default shortcut is **Ctrl+Shift+Y**. Change it in `chrome://extensions/shortcuts`. The extension captures the selected element from the active tab, sends it to Telegram when Telegram credentials are configured, and opens a fresh chat with the selected AI service. Content scripts do not run on `chrome://` pages or in the Web Store, and tabs opened before the extension was loaded need a refresh.
 
 ## Build from source
 
-Prerequisites: Rust with the `wasm32-unknown-unknown` target, `wasm-pack` (it picks and downloads the `wasm-bindgen` version matching the crate), and [bun](https://bun.sh).
+Prerequisites: Rust with the `wasm32-unknown-unknown` target and `wasm-pack` (it picks and downloads the `wasm-bindgen` version matching the crate).
 
 ```bash
 cargo install wasm-pack --locked   # once
-wasm-pack build --target web --release --out-dir extension/pkg
-bun install
-bun run build   # tsc: extension/*.ts -> extension/*.js
+wasm-pack build --target no-modules --no-typescript --release --out-dir extension/pkg
 ```
 
-`extension/pkg/` and the emitted `extension/*.js` are generated and gitignored; the `.ts` files and `src/*.rs` are the sources. After rebuilding, reload the unpacked extension in Chrome. If the service worker logs `wasm_bindgen_<hash>... is not a function`, Chrome kept a stale `pkg` glue module from before the rebuild; a full browser restart clears it.
+The single `no-modules` WASM package is shared by the service worker, options page, and content script. `extension/pkg/` is generated; the `.rs` files and JavaScript bootstraps are the sources. After rebuilding, reload the unpacked extension in Chrome.
 
 Pushing a `v*.*.*` tag runs the GitHub Actions release workflow: it builds the chain above on a clean checkout, stamps the tag into `extension/manifest.json`, and attaches the zip to the release. There is no test suite; `cargo clippy` and `cargo fmt` run with default settings.
 

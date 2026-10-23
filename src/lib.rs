@@ -1,5 +1,10 @@
 mod app;
+mod assistant;
+mod background;
+mod chrome_api;
 mod config;
+mod content;
+mod messages;
 mod telegram;
 
 use wasm_bindgen::prelude::*;
@@ -10,18 +15,18 @@ pub fn mount_options() {
     leptos::mount::mount_to_body(app::App);
 }
 
-#[wasm_bindgen(js_name = sendToTelegram)]
-pub async fn send_to_telegram(
-    html: String,
-    settings: JsValue,
-    screenshot: Option<String>,
-) -> Result<String, String> {
+#[wasm_bindgen(js_name = handleBackgroundMessage)]
+pub fn handle_background_message(
+    message: JsValue,
+    sender: JsValue,
+    send_response: js_sys::Function,
+) -> bool {
     console_error_panic_hook::set_once();
-    let settings: config::Settings =
-        serde_wasm_bindgen::from_value(settings).map_err(|e| e.to_string())?;
-    if settings.telegram_token.is_empty() || settings.chat_id.is_empty() {
-        return Err("telegram bot token and chat id are required".to_string());
-    }
-    telegram::send(&settings, &html, screenshot.as_deref()).await?;
-    Ok("sent".to_string())
+    background::handle_message(message, sender, send_response)
+}
+
+#[wasm_bindgen(js_name = startContent)]
+pub fn start_content() {
+    console_error_panic_hook::set_once();
+    content::start();
 }

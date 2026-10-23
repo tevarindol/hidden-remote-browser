@@ -11,6 +11,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+futures = "0.3"
+gloo-net = { version = "0.6", default-features = false, features = ["http"] }
+gloo-timers = { version = "0.3", features = ["futures"] }
 js-sys = "0.3"
 leptos = { version = "0.8.22", features = ["csr"] }
 serde = { version = "1", features = ["derive"] }
@@ -21,9 +24,23 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = [
     "Blob",
     "BlobPropertyBag",
+    "console",
+    "Document",
+    "Element",
+    "Event",
+    "EventInit",
+    "EventTarget",
     "FormData",
+    "HtmlButtonElement",
+    "HtmlElement",
+    "HtmlSelectElement",
+    "InputEvent",
+    "InputEventInit",
+    "Location",
+    "Node",
     "RequestInit",
     "Response",
+    "Window",
 ] }
 
 [profile.release]

@@ -4,13 +4,25 @@
   "version": "0.1.0",
   "permissions": ["storage"],
   "host_permissions": ["<all_urls>", "https://api.telegram.org/*"],
+  "commands": {
+    "capture-page": {
+      "suggested_key": { "default": "Ctrl+Shift+Y" },
+      "description": "Capture page and send it to the selected AI service"
+    }
+  },
   "options_page": "options.html",
-  "background": { "service_worker": "bg.js", "type": "module" },
+  "background": { "service_worker": "background-bootstrap.js" },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["pkg/hidden_remote_browser.js", "content-bootstrap.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["pkg/hidden_remote_browser_bg.wasm"],
+      "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {

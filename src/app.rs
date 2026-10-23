@@ -7,11 +7,9 @@ pub fn App() -> impl IntoView {
     let telegram_token = RwSignal::new(String::new());
     let chat_id = RwSignal::new(String::new());
     let html_selector = RwSignal::new("main".to_string());
-    let hotkey_code = RwSignal::new("NumpadSubtract".to_string());
-    let hotkey_ctrl = RwSignal::new(false);
-    let hotkey_alt = RwSignal::new(false);
-    let hotkey_shift = RwSignal::new(false);
+    let ai_provider = RwSignal::new(crate::config::AI_PROVIDER_GEMINI.to_string());
     let send_photo = RwSignal::new(false);
+    let prompt_template = RwSignal::new(Settings::default().prompt_template);
     let status = RwSignal::new(String::new());
 
     Effect::new(move |_| {
@@ -21,11 +19,9 @@ pub fn App() -> impl IntoView {
                     telegram_token.set(settings.telegram_token);
                     chat_id.set(settings.chat_id);
                     html_selector.set(settings.html_selector);
-                    hotkey_code.set(settings.hotkey_code);
-                    hotkey_ctrl.set(settings.hotkey_ctrl);
-                    hotkey_alt.set(settings.hotkey_alt);
-                    hotkey_shift.set(settings.hotkey_shift);
+                    ai_provider.set(settings.ai_provider);
                     send_photo.set(settings.send_photo);
+                    prompt_template.set(settings.prompt_template);
                 }
                 Err(error) => status.set(format!("failed to load settings: {error}")),
             }
@@ -37,11 +33,9 @@ pub fn App() -> impl IntoView {
             telegram_token: telegram_token.get(),
             chat_id: chat_id.get(),
             html_selector: html_selector.get(),
-            hotkey_code: hotkey_code.get(),
-            hotkey_ctrl: hotkey_ctrl.get(),
-            hotkey_alt: hotkey_alt.get(),
-            hotkey_shift: hotkey_shift.get(),
+            ai_provider: ai_provider.get(),
             send_photo: send_photo.get(),
+            prompt_template: prompt_template.get(),
         };
         spawn_local(async move {
             status.set(match config::save(&settings).await {
@@ -67,22 +61,19 @@ pub fn App() -> impl IntoView {
                 <input r#type="text" placeholder="main" style="width: 100%" bind:value=html_selector />
             </label>
             <label>
-                "Hotkey (KeyboardEvent.code, e.g. NumpadSubtract)"
-                <input r#type="text" placeholder="NumpadSubtract" style="width: 100%" bind:value=hotkey_code />
+                "AI service"
+                <select style="width: 100%" bind:value=ai_provider>
+                    <option value="gemini">"Gemini"</option>
+                    <option value="claude">"Claude"</option>
+                </select>
             </label>
+            <label>
+                "AI prompt template"
+                <textarea rows="8" style="width: 100%" bind:value=prompt_template />
+                <small>"Use {url} for the page URL and {html} for the captured element."</small>
+            </label>
+            <p>"Keyboard shortcut: Ctrl+Shift+Y by default. Change it in chrome://extensions/shortcuts."</p>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap">
-                <label>
-                    "Ctrl"
-                    <input r#type="checkbox" bind:checked=hotkey_ctrl />
-                </label>
-                <label>
-                    "Alt"
-                    <input r#type="checkbox" bind:checked=hotkey_alt />
-                </label>
-                <label>
-                    "Shift"
-                    <input r#type="checkbox" bind:checked=hotkey_shift />
-                </label>
                 <label>
                     "Send screenshot"
                     <input r#type="checkbox" bind:checked=send_photo />

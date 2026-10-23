@@ -20,16 +20,11 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - uses: oven-sh/setup-bun@v2
-
       - name: Install wasm-pack
         run: cargo install wasm-pack --locked
 
       - name: Build wasm bindings
-        run: wasm-pack build --target web --release --out-dir extension/pkg
-
-      - name: Compile extension scripts
-        run: bun install --frozen-lockfile && bun run build
+        run: wasm-pack build --target no-modules --no-typescript --release --out-dir extension/pkg
 
       - name: Resolve version
         id: ver
